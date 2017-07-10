@@ -237,7 +237,7 @@ func netstat(t string) []Process {
         fip := convertIP(fipPort[0])
         fport := hexToDec(fipPort[1])
 
-        // state := STATE[lineArray[3]]
+        state := STATE[lineArray[3]]
         // uid := getUser(lineArray[7])
         // pid := findPid(lineArray[9])
         // exe, err := getProcessExe(pid)
@@ -253,7 +253,7 @@ func netstat(t string) []Process {
           // Name: name,
           // Pid: pid,
           // Exe: exe,
-          // State: state,
+          State: state,
           IP: ip,
           Port: port,
           ForeignIP: fip,
