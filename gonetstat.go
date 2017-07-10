@@ -26,21 +26,34 @@ const (
     PROC_TCP6 = "/proc/net/tcp6"
     PROC_UDP6 = "/proc/net/udp6"
 
+    SOCKET_STATE_ESTABLISHED = "01"
+    SOCKET_STATE_SYN_SENT    = "02"
+    SOCKET_STATE_SYN_RECV    = "03"
+    SOCKET_STATE_FIN_WAIT1   = "04"
+    SOCKET_STATE_FIN_WAIT2   = "05"
+    SOCKET_STATE_TIME_WAIT   = "06"
+    SOCKET_STATE_CLOSE       = "07"
+    SOCKET_STATE_CLOSE_WAIT  = "08"
+    SOCKET_STATE_LAST_ACK    = "09"
+    SOCKET_STATE_LISTEN      = "0A"
+    SOCKET_STATE_CLOSING     = "0B"
 )
 
-var STATE = map[string]string {
-                            "01": "ESTABLISHED",
-                            "02": "SYN_SENT",
-                            "03": "SYN_RECV",
-                            "04": "FIN_WAIT1",
-                            "05": "FIN_WAIT2",
-                            "06": "TIME_WAIT",
-                            "07": "CLOSE",
-                            "08": "CLOSE_WAIT",
-                            "09": "LAST_ACK",
-                            "0A": "LISTEN",
-                            "0B": "CLOSING",
-}
+var (
+  STATE = map[string]string {
+      SOCKET_STATE_ESTABLISHED: "ESTABLISHED",
+      SOCKET_STATE_SYN_SENT:    "SYN_SENT",
+      SOCKET_STATE_SYN_RECV:    "SYN_RECV",
+      SOCKET_STATE_FIN_WAIT1:   "FIN_WAIT1",
+      SOCKET_STATE_FIN_WAIT2:   "FIN_WAIT2",
+      SOCKET_STATE_TIME_WAIT:   "TIME_WAIT",
+      SOCKET_STATE_CLOSE:       "CLOSE",
+      SOCKET_STATE_CLOSE_WAIT:  "CLOSE_WAIT",
+      SOCKET_STATE_LAST_ACK:    "LAST_ACK",
+      SOCKET_STATE_LISTEN:      "LISTEN",
+      SOCKET_STATE_CLOSING:     "CLOSING",
+  }
+)
 
 
 type Process struct {
@@ -224,18 +237,28 @@ func netstat(t string) []Process {
         fip := convertIP(fipPort[0])
         fport := hexToDec(fipPort[1])
 
-        state := STATE[lineArray[3]]
-        uid := getUser(lineArray[7])
-        pid := findPid(lineArray[9])
-        exe, err := getProcessExe(pid)
-        name := "-"
-        if err != nil {
-          fmt.Printf("Couldn't find process exec located at /proc/%s/exe\n", pid)
-        } else {
-          name = getProcessName(exe)
-        }
+        // state := STATE[lineArray[3]]
+        // uid := getUser(lineArray[7])
+        // pid := findPid(lineArray[9])
+        // exe, err := getProcessExe(pid)
+        // name := "-"
+        // if err != nil {
+        //   fmt.Printf("Couldn't find process exec located at /proc/%s/exe\n", pid)
+        // } else {
+        //   name = getProcessName(exe)
+        // }
 
-        p := Process{uid, name, pid, exe, state, ip, port, fip, fport}
+        p := Process{
+          // User: uid,
+          // Name: name,
+          // Pid: pid,
+          // Exe: exe,
+          // State: state,
+          IP: ip,
+          Port: port,
+          ForeignIP: fip,
+          ForeignPort: fport,
+        }
 
         Processes = append(Processes, p)
 
