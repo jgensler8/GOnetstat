@@ -49,9 +49,9 @@ type Process struct {
     Pid          string
     Exe          string
     State        string
-    Ip           string
+    IP           string
     Port         int64
-    ForeignIp    string
+    ForeignIP    string
     ForeignPort  int64
 }
 
@@ -59,23 +59,23 @@ type Process struct {
 func getData(t string) []string {
     // Get data from tcp or udp file.
 
-    var proc_t string
+    var procT string
 
     if t == "tcp" {
-        proc_t = PROC_TCP
+        procT = PROC_TCP
     } else if t == "udp" {
-        proc_t = PROC_UDP
+        procT = PROC_UDP
     } else if t == "tcp6" {
-        proc_t = PROC_TCP6
+        procT = PROC_TCP6
     } else if t == "udp6" {
-        proc_t = PROC_UDP6
+        procT = PROC_UDP6
     } else {
         fmt.Printf("%s is a invalid type, tcp and udp only!\n", t)
         os.Exit(1)
     }
 
 
-    data, err := ioutil.ReadFile(proc_t)
+    data, err := ioutil.ReadFile(procT)
     if err != nil {
         fmt.Println(err)
         os.Exit(1)
@@ -100,7 +100,7 @@ func hexToDec(h string) int64 {
 }
 
 
-func convertIp(ip string) string {
+func convertIP(ip string) string {
     // Convert the ipv4 to decimal. Have to rearrange the ip because the
     // default value is in little Endian order.
 
@@ -156,7 +156,10 @@ func findPid(inode string) string {
 
     re := regexp.MustCompile(inode)
     for _, item := range(d) {
-        path, _ := os.Readlink(item)
+        path, err := os.Readlink(item)
+        if err != nil {
+          continue
+        }
         out := re.FindString(path)
         if len(out) != 0 {
             pid = strings.Split(item, "/")[2]
@@ -166,10 +169,9 @@ func findPid(inode string) string {
 }
 
 
-func getProcessExe(pid string) string {
+func getProcessExe(pid string) (string, error) {
     exe := fmt.Sprintf("/proc/%s/exe", pid)
-    path, _ := os.Readlink(exe)
-    return path
+    return os.Readlink(exe)
 }
 
 
@@ -181,20 +183,23 @@ func getProcessName(exe string) string {
 
 
 func getUser(uid string) string {
-    u, _ := user.LookupId(uid)
+    u, err := user.LookupId(uid)
+    if err != nil {
+      return "-"
+    }
     return u.Username
 }
 
 
 func removeEmpty(array []string) []string {
     // remove empty data from line
-    var new_array [] string
+    var newArray []string
     for _, i := range(array) {
         if i != "" {
-           new_array = append(new_array, i)
+           newArray = append(newArray, i)
         }
     }
-    return new_array
+    return newArray
 }
 
 
@@ -209,20 +214,24 @@ func netstat(t string) []Process {
     for _, line := range(data) {
 
         // local ip and port
-        line_array := removeEmpty(strings.Split(strings.TrimSpace(line), " "))
-        ip_port := strings.Split(line_array[1], ":")
-        ip := convertIp(ip_port[0])
-        port := hexToDec(ip_port[1])
+        lineArray := removeEmpty(strings.Split(strings.TrimSpace(line), " "))
+        ipPort := strings.Split(lineArray[1], ":")
+        ip := convertIP(ipPort[0])
+        port := hexToDec(ipPort[1])
 
         // foreign ip and port
-        fip_port := strings.Split(line_array[2], ":")
-        fip := convertIp(fip_port[0])
-        fport := hexToDec(fip_port[1])
+        fipPort := strings.Split(lineArray[2], ":")
+        fip := convertIP(fipPort[0])
+        fport := hexToDec(fipPort[1])
 
-        state := STATE[line_array[3]]
-        uid := getUser(line_array[7])
-        pid := findPid(line_array[9])
-        exe := getProcessExe(pid)
+        state := STATE[lineArray[3]]
+        uid := getUser(lineArray[7])
+        pid := findPid(lineArray[9])
+        exe, err := getProcessExe(pid)
+        if err != nil {
+          fmt.Print("Couldn't find process")
+          continue
+        }
         name := getProcessName(exe)
 
         p := Process{uid, name, pid, exe, state, ip, port, fip, fport}
