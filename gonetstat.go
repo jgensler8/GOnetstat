@@ -228,11 +228,12 @@ func netstat(t string) []Process {
         uid := getUser(lineArray[7])
         pid := findPid(lineArray[9])
         exe, err := getProcessExe(pid)
+        name := "-"
         if err != nil {
-          fmt.Print("Couldn't find process")
-          continue
+          fmt.Printf("Couldn't find process exec located at /proc/%s/exe\n", pid)
+        } else {
+          name = getProcessName(exe)
         }
-        name := getProcessName(exe)
 
         p := Process{uid, name, pid, exe, state, ip, port, fip, fport}
 
